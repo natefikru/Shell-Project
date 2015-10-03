@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
+#include<unistd.h>
 
 int main()
 {
@@ -34,10 +35,11 @@ char *inputLine(void)
 	return line;
 }
 
+#define tokenSize 64
+#define tokenDivider = " \t\r\n\a"
 char **parseLine(char *line)
 {
-	int * tokenSize = 64;
-	char * tokenDivider = " ";
+
 	int bufferSize = tokenSize, position = 0;
 	char **tokens = malloc(bufferSize * sizeof(char*));
 	char *token;
@@ -85,6 +87,7 @@ int initiateArgs(char **args)
   	return startCommands(args);
 }
 
+//tokens in an array
 int startCommands(char **args)
 {
 	pid_t pid, wpid;
@@ -92,8 +95,18 @@ int startCommands(char **args)
 
 	pid = fork();
 	if(pid == 0){
-	
+		execvp(args[0], args);
 	}
+	else if(pid < 0){
+		fprintf(stderr, "Fork Failed");
+	}
+	else {
+		wait(NULL);
+		printf("Child has completed");
+	}
+
+	return 1;
+
 }
 
 
