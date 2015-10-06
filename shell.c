@@ -2,35 +2,76 @@
 #include<stdlib.h>
 #include<string.h>
 #include<unistd.h>
+#include<sched.h>
 
 
-int lsh_exit(char **args);
-int lsh_cd(char **args) ;
+int shell_exit(char **args);
+int help(char **args);
+int cd(char **args) ;
+int shell_clone(char **args);
+
+#define STACK_SIZE 4068 
+char *clone_net = "CLONE_NET";
+
+//bool * isBackground = false;
 
 char *builtin_str[] = {
   "cd",
   "help",
-  "exit"
+  "exit",
+  "clone"
 };
 
 int (*builtin_func[]) (char **) = {
-  &lsh_exit,
-	&lsh_cd
+	&cd,
+	&help,
+	&shell_exit,
+	&shell_clone
 };
 
-int lsh_cd(char **args)
+int cd(char **args)
 {
+	printf("calling cd\n");
   if (args[1] == NULL) {
-    fprintf(stderr, "lsh: expected argument to \"cd\"\n");
+    fprintf(stderr, "expected argument to \"cd\"\n");
   } else {
     if (chdir(args[1]) != 0) {
-      perror("lsh");
+      perror("shell");
     }
   }
   return 1;
 }
 
-int lsh_num_builtins() {
+int cloneCalled(){
+	char *ifconfigArgs[] = {"ifconfig", NULL};
+	execvp(*ifconfigArgs, ifconfigArgs);
+	printf("Clone_NET has been called\n");
+}
+
+int help(char **args)
+{
+	printf("calling help\n");
+	printf("this is where the help status will go\n");
+	return 1;
+}
+
+int shell_clone(char **args){
+	
+	printf("calling clone\n");
+	void *child_stack = malloc(STACK_SIZE);
+	if(strcmp(args[0], "clone") == 0){
+		if(args[1] == NULL){
+		fprintf(stderr, "expected argument CLONE_NET or clone_fs\n");
+		}
+		if(strcmp(args[1], "net") == 0){
+			clone(&cloneCalled, child_stack+STACK_SIZE, *clone_net, NULL);
+		}
+	}	
+	
+}
+
+
+int num_builtins() {
   return sizeof(builtin_str) / sizeof(char *);
 }
 
@@ -86,16 +127,36 @@ int startCommands(char **args)
 
 	pid = fork();
 	if(pid == 0){
-		printf("child has been created\n");
 		if(strcmp(args[0], "ls") == 0){
-			char *execArgs[] = {"ls", NULL};
-			//execvp(args[0], args);
-			execvp("ls", execArgs);
+			execvp(*args, args);
 		}
-		if(strcmp(args[0], "bash") == 0){
-			char *execArgs[] = {"bash","mkdir", NULL};
-			//execvp(args[0], args);
-			execvp("bash", execArgs);
+		else if(strcmp(args[0], "mkdir") == 0){
+			execvp(*args, args);
+		}
+		else if(strcmp(args[0], "touch") == 0){
+			execvp(*args, args);
+		}
+		else if(strcmp(args[0], "pwd") == 0){
+			execvp(*args, args);
+		}
+		else if(strcmp(args[0], "rm") == 0){
+			execvp(*args, args);
+		}
+		else if(strcmp(args[0], "rmdir") == 0){
+			execvp(*args, args);
+		}
+		else if(strcmp(args[0], "grep") == 0){
+			execvp(*args, args);
+		}
+		else if(strcmp(args[0], "sh") == 0){
+			execvp(*args, args);
+		}
+		else if(strcmp(args[0], "bash") == 0){
+			char *execArgs[] = {"/bin/bash", NULL};
+			execvp(*args, args);
+		}
+		else {
+		execvp(*args, args);
 		}
 	}
 	else if(pid < 0){
@@ -103,7 +164,6 @@ int startCommands(char **args)
 	}
 	else {
 		wait(NULL);
-		printf("Child has completed\n");
 	}
 
 	return 1;
@@ -116,7 +176,8 @@ int initiateArgs(char **args)
 	if(args[0] == NULL){
 		return 1;
 	}
-	for (i = 0; i < lsh_num_builtins(); i++) {
+	printf("built in arg call\n");
+	for (i = 0; i < num_builtins(); i++) {
 		if (strcmp(args[0], builtin_str[i]) == 0)
 		{
 			return (*builtin_func[i])(args);
@@ -135,7 +196,6 @@ void commandLoop(void)
 	int status;
 
 	do {
-		printf("Shell has started\n");
 		line = inputLine();
 		args = parseLine(line);
 		status = initiateArgs(args);
@@ -148,11 +208,14 @@ void commandLoop(void)
 int main()
 {
 	commandLoop();
-  printf("Exiting Shell");
+  printf("Exiting Shell\n");
 	return EXIT_SUCCESS;
 }
 
-int lsh_exit(char **args)
+int shell_exit(char **args)
 {
   return 0;
 }
+
+
+
