@@ -1,8 +1,10 @@
+#define _GNU_SOURCE
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
 #include<unistd.h>
 #include<sched.h>
+#include<sys/wait.h>
 
 
 int shell_exit(char **args);
@@ -11,7 +13,6 @@ int cd(char **args) ;
 int shell_clone(char **args);
 
 #define STACK_SIZE 4068 
-char *clone_net = "CLONE_NET";
 
 //bool * isBackground = false;
 
@@ -43,8 +44,9 @@ int cd(char **args)
 }
 
 int cloneCalled(){
-	char *ifconfigArgs[] = {"ifconfig", NULL};
-	execvp(*ifconfigArgs, ifconfigArgs);
+	printf("yessir\n");
+	char *iplinkArgs[] = {"ip","link", NULL};
+	execvp(*iplinkArgs, iplinkArgs);
 	printf("Clone_NET has been called\n");
 }
 
@@ -64,7 +66,9 @@ int shell_clone(char **args){
 		fprintf(stderr, "expected argument CLONE_NET or clone_fs\n");
 		}
 		if(strcmp(args[1], "net") == 0){
-			clone(&cloneCalled, child_stack+STACK_SIZE, *clone_net, NULL);
+		printf("1\n");
+			clone(cloneCalled, child_stack+STACK_SIZE,CLONE_NEWNET, NULL);
+		printf("2\n");
 		}
 	}	
 	
